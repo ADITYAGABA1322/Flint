@@ -6,19 +6,28 @@ import { registerMentionHandler } from './handlers/mention';
 
 const MODULE = 'AppBootstrap';
 
-const receiver = new ExpressReceiver({
-  signingSecret: env.SLACK_SIGNING_SECRET,
-  endpoints: { events: '/slack/events' }
-});
+let app: App;
+let expressApp: express.Application;
 
-const app = new App({
-  token: env.SLACK_BOT_TOKEN,
-  receiver,
-  socketMode: env.SOCKET_MODE,
-  appToken: env.SLACK_APP_TOKEN
-});
+if (env.SOCKET_MODE) {
+  app = new App({
+    token: env.SLACK_BOT_TOKEN,
+    socketMode: true,
+    appToken: env.SLACK_APP_TOKEN
+  });
+  expressApp = express();
+} else {
+  const receiver = new ExpressReceiver({
+    signingSecret: env.SLACK_SIGNING_SECRET,
+    endpoints: { events: '/slack/events' }
+  });
+  app = new App({
+    token: env.SLACK_BOT_TOKEN,
+    receiver
+  });
+  expressApp = receiver.app;
+}
 
-const expressApp = receiver.app;
 expressApp.use(express.json());
 
 expressApp.get('/health', (_req, res) => {
@@ -39,8 +48,16 @@ app.error(async (error) => {
 
 (async () => {
   const port = env.PORT;
-  await app.start(port);
-  logger.info(MODULE, `Flint backend server running on port ${port} (SocketMode=${env.SOCKET_MODE})`);
+  if (env.SOCKET_MODE) {
+    await app.start();
+    expressApp.listen(port, () => {
+      logger.info(MODULE, `Flint Express server listening on port ${port}`);
+    });
+    logger.info(MODULE, `Flint SocketMode app started successfully`);
+  } else {
+    await app.start(port);
+    logger.info(MODULE, `Flint backend server running on port ${port} (SocketMode=false)`);
+  }
 })();
 
 export { app, expressApp };
