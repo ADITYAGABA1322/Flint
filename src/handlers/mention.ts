@@ -1,5 +1,6 @@
 import type { App } from '@slack/bolt';
 import { logger } from '../utils/logger';
+import { getWorkspaceConfig } from '../config/WorkspaceConfigStore';
 import { classifyIntent } from '../intent/IntentEngine';
 import { executeActions } from '../tools/MCPFanOut';
 import { buildActionCard } from '../blocks/ActionCard';
@@ -40,14 +41,8 @@ export function registerMentionHandler(app: App): void {
       return;
     }
 
-    const results = await executeActions(intent, {
-      workspaceId: ctx.workspaceId,
-      watchedChannels: [ctx.channelId],
-      thresholds: { stalePrHours: 48, unansweredHours: 4, duplicateWindowHours: 2 },
-      enabledPatterns: [],
-      connectedTools: [],
-      aggressiveness: 'normal'
-    });
+    const config = await getWorkspaceConfig(ctx.workspaceId);
+    const results = await executeActions(intent, config);
 
     const blocks = buildActionCard(null, results);
     await say({

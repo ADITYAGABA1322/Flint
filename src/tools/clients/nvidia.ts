@@ -4,7 +4,7 @@ export async function chatCompletion(
   messages: Array<{ role: string; content: string }>,
   system?: string
 ): Promise<string> {
-  const url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+  const url = `${env.NVIDIA_API_URL}/chat/completions`;
 
   const payloadMessages = [...messages];
   if (system) {
@@ -19,7 +19,7 @@ export async function chatCompletion(
       'Accept': 'application/json'
     },
     body: JSON.stringify({
-      model: 'mistralai/mistral-medium-3.5-128b',
+      model: env.NVIDIA_API_MODEL,
       messages: payloadMessages,
       max_tokens: 4096,
       temperature: 0.2,

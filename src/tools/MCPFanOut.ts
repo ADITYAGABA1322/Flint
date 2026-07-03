@@ -1,32 +1,28 @@
 import type { IntentResult } from '../../contracts/planner';
 import type { WorkspaceConfig, ActionResult, ActionResults } from '../../contracts/services';
+import { Planner } from '../planner/Planner';
 import * as linear from './mcp/LinearClient';
 
 export const executeActions = async (
   intent: IntentResult,
-  _config: WorkspaceConfig
+  config: WorkspaceConfig
 ): Promise<ActionResults> => {
+  const planner = new Planner();
+  const plan = await planner.plan(intent, config);
+
   const succeeded: ActionResult[] = [];
   const failed: ActionResult[] = [];
   const results: ActionResult[] = [];
 
-  const targets = intent.entities.toolTargets;
-
-  if (targets.includes('linear')) {
-    const res = await linear.run({
-      server: 'linear',
-      tool: 'create_issue',
-      params: {
-        title: intent.entities.title || 'Slack captured ticket',
-        description: intent.entities.description || '',
-        priority: intent.entities.severity || 'P2'
+  for (const call of plan.calls) {
+    if (call.server === 'linear') {
+      const res = await linear.run(call);
+      results.push(res);
+      if (res.ok) {
+        succeeded.push(res);
+      } else {
+        failed.push(res);
       }
-    });
-    results.push(res);
-    if (res.ok) {
-      succeeded.push(res);
-    } else {
-      failed.push(res);
     }
   }
 

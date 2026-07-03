@@ -6,14 +6,25 @@ export const buildActionCard = (
   pattern: PatternMatch | null,
   results: ActionResults
 ): KnownBlock[] => {
+  const hasFailures = results.failed.length > 0;
+  const allFailed = hasFailures && results.succeeded.length === 0;
+
   const header = pattern
     ? `*⚡ Flint detected friction*\n${pattern.summary}`
-    : `*⚡ Flint acted on your request*\n${results.summary}`;
+    : allFailed
+      ? `*⚠️ Flint encountered an error acting on your request*\n${results.summary}`
+      : `*⚡ Flint acted on your request*\n${results.summary}`;
 
-  const fields = results.succeeded.map((r) => ({
-    type: 'mrkdwn' as const,
-    text: `✅ *${r.tool.toUpperCase()}*\n<${r.url ?? '#'}|${r.description}>`
-  }));
+  const fields = [
+    ...results.succeeded.map((r) => ({
+      type: 'mrkdwn' as const,
+      text: `✅ *${r.tool.toUpperCase()}*\n<${r.url ?? '#'}|${r.description}>`
+    })),
+    ...results.failed.map((r) => ({
+      type: 'mrkdwn' as const,
+      text: `❌ *${r.tool.toUpperCase()} Failed*\n${r.error || r.description}`
+    }))
+  ];
 
   const card: KnownBlock[] = [
     { type: 'section', text: { type: 'mrkdwn', text: header } }

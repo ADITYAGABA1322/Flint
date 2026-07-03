@@ -7,9 +7,12 @@ export interface Env {
   SLACK_APP_TOKEN?: string;
   SLACK_USER_TOKEN: string;
   NVIDIA_API_KEY: string;
+  NVIDIA_API_URL: string;
+  NVIDIA_API_MODEL: string;
   UPSTASH_REDIS_REST_URL: string;
   UPSTASH_REDIS_REST_TOKEN: string;
   LINEAR_API_KEY: string;
+  LINEAR_DEFAULT_TEAM?: string;
   PORT: number;
   SOCKET_MODE: boolean;
 }
@@ -19,6 +22,8 @@ const requiredKeys: Array<keyof Env> = [
   'SLACK_SIGNING_SECRET',
   'SLACK_USER_TOKEN',
   'NVIDIA_API_KEY',
+  'NVIDIA_API_URL',
+  'NVIDIA_API_MODEL',
   'UPSTASH_REDIS_REST_URL',
   'UPSTASH_REDIS_REST_TOKEN',
   'LINEAR_API_KEY',
@@ -49,9 +54,12 @@ function validateEnv(): Env {
     SLACK_APP_TOKEN: processEnv.SLACK_APP_TOKEN,
     SLACK_USER_TOKEN: processEnv.SLACK_USER_TOKEN!,
     NVIDIA_API_KEY: processEnv.NVIDIA_API_KEY!,
+    NVIDIA_API_URL: processEnv.NVIDIA_API_URL!,
+    NVIDIA_API_MODEL: processEnv.NVIDIA_API_MODEL!,
     UPSTASH_REDIS_REST_URL: processEnv.UPSTASH_REDIS_REST_URL!,
     UPSTASH_REDIS_REST_TOKEN: processEnv.UPSTASH_REDIS_REST_TOKEN!,
     LINEAR_API_KEY: processEnv.LINEAR_API_KEY!,
+    LINEAR_DEFAULT_TEAM: processEnv.LINEAR_DEFAULT_TEAM,
     PORT: processEnv.PORT ? parseInt(processEnv.PORT, 10) : 3000,
     SOCKET_MODE: socketMode,
   };

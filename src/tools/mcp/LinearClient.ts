@@ -9,7 +9,41 @@ const linear = new McpClient({
 
 export const run = async (call: ToolCall): Promise<ActionResult> => {
   try {
-    const result = await linear.callTool(call.tool, call.params);
+    let toolName = call.tool;
+    const params = { ...call.params };
+
+    if (toolName === 'create_issue') {
+      toolName = 'save_issue';
+    }
+
+    if (toolName === 'save_issue') {
+      if (!params.team) {
+        try {
+          const teamsResult = await linear.callTool('list_teams', {});
+          const text = teamsResult.content?.[0]?.text || '{}';
+          const parsed = JSON.parse(text);
+          const firstTeam = parsed.teams?.[0];
+          if (firstTeam) {
+            params.team = firstTeam.id;
+          } else {
+            throw new Error('No teams found in your Linear workspace.');
+          }
+        } catch (e) {
+          throw new Error(`Failed to resolve default Linear team: ${String(e)}`);
+        }
+      }
+
+      const priorityMap: Record<string, number> = {
+        'P0': 1,
+        'P1': 2,
+        'P2': 3,
+        'P3': 4
+      };
+      const rawPriority = params.priority as string | undefined;
+      params.priority = rawPriority ? (priorityMap[rawPriority] ?? 0) : 0;
+    }
+
+    const result = await linear.callTool(toolName, params);
 
     const isOk = result && !result.isError;
     const textContent = Array.isArray(result.content)
