@@ -4,7 +4,7 @@ import { env } from '../../config/env';
 
 const linear = new McpClient({
   url: 'https://mcp.linear.app/mcp',
-  auth: { Authorization: env.LINEAR_API_KEY }
+  auth: { Authorization: `Bearer ${env.LINEAR_API_KEY}` }
 });
 
 export const run = async (call: ToolCall): Promise<ActionResult> => {

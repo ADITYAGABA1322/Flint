@@ -1,12 +1,12 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { logger } from '../utils/logger';
 
 const MODULE = 'McpClientRuntime';
 
 export class McpClient {
   private client: Client | null = null;
-  private transport: SSEClientTransport | null = null;
+  private transport: StreamableHTTPClientTransport | null = null;
 
   constructor(private cfg: { url: string; auth: Record<string, string> }) {}
 
@@ -16,10 +16,10 @@ export class McpClient {
     logger.info(MODULE, `Connecting to MCP server at ${this.cfg.url}`);
 
     const headers: Record<string, string> = { ...this.cfg.auth };
-    this.transport = new SSEClientTransport(new URL(this.cfg.url), {
-      eventSourceInit: {
+    this.transport = new StreamableHTTPClientTransport(new URL(this.cfg.url), {
+      requestInit: {
         headers,
-      } as any,
+      },
     });
 
     this.client = new Client(

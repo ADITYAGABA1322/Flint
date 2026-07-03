@@ -1,8 +1,7 @@
 import type { SlackContext, PatternMatch } from '../../contracts/events';
 import type { IntentResult, IntentType } from '../../contracts/planner';
 import { CLASSIFY_SYSTEM_PROMPT } from './prompts/classify';
-import { anthropic } from '../tools/clients/claude';
-import type { TextBlock } from '@anthropic-ai/sdk/resources';
+import { chatCompletion } from '../tools/clients/nvidia';
 
 const VALID_INTENTS: IntentType[] = [
   'QUERY',
@@ -65,18 +64,10 @@ export const classifyIntent = async (
   pattern?: PatternMatch,
 ): Promise<IntentResult> => {
   try {
-    const res = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1024,
-      temperature: 0,
-      system: CLASSIFY_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: buildPayload(ctx, pattern) }],
-    });
-
-    const text = res.content
-      .filter((b): b is TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n');
+    const text = await chatCompletion(
+      [{ role: 'user', content: buildPayload(ctx, pattern) }],
+      CLASSIFY_SYSTEM_PROMPT
+    );
 
     const intent = parseIntent(text);
     console.log(`[IntentEngine] -> ${intent.intent} (${intent.confidence})`);
