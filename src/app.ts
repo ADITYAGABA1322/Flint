@@ -3,6 +3,7 @@ import express from 'express';
 import { env } from './config/env';
 import { logger } from './utils/logger';
 import { registerMentionHandler } from './handlers/mention';
+import { registerMessageHandler, registerActionHandlers } from './handlers/message';
 
 const MODULE = 'AppBootstrap';
 
@@ -41,6 +42,10 @@ expressApp.post('/cron/tick', async (_req, res) => {
 });
 
 registerMentionHandler(app);
+registerMessageHandler(app);
+logger.info(MODULE, 'Message handler registered');
+logger.info(MODULE, 'Passive observation enabled');
+registerActionHandlers(app);
 
 app.error(async (error) => {
   logger.error(MODULE, 'Uncaught Bolt framework error:', error);
@@ -54,6 +59,7 @@ app.error(async (error) => {
       logger.info(MODULE, `Flint Express server listening on port ${port}`);
     });
     logger.info(MODULE, `Flint SocketMode app started successfully`);
+    logger.info(MODULE, 'Socket Mode connected');
   } else {
     await app.start(port);
     logger.info(MODULE, `Flint backend server running on port ${port} (SocketMode=false)`);

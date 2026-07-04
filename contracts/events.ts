@@ -7,7 +7,7 @@ export interface SlackContext {
   messageTs: string;
   threadTs?: string;
   text: string;
-  triggerType: 'mention' | 'slash' | 'action';
+  triggerType: 'mention' | 'slash' | 'action' | 'observation';
   command?: string;
   actionId?: string;
   rawEvent: unknown;
