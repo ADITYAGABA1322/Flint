@@ -15,6 +15,10 @@ export interface Env {
   LINEAR_DEFAULT_TEAM?: string;
   PORT: number;
   SOCKET_MODE: boolean;
+  NOTION_API_KEY?: string;
+  NOTION_DATABASE_ID?: string;
+  ASANA_ACCESS_TOKEN?: string;
+  ASANA_PROJECT_ID?: string;
 }
 
 const requiredKeys: Array<keyof Env> = [
@@ -62,6 +66,10 @@ function validateEnv(): Env {
     LINEAR_DEFAULT_TEAM: processEnv.LINEAR_DEFAULT_TEAM,
     PORT: processEnv.PORT ? parseInt(processEnv.PORT, 10) : 3000,
     SOCKET_MODE: socketMode,
+    NOTION_API_KEY: processEnv.NOTION_API_KEY,
+    NOTION_DATABASE_ID: processEnv.NOTION_DATABASE_ID,
+    ASANA_ACCESS_TOKEN: processEnv.ASANA_ACCESS_TOKEN,
+    ASANA_PROJECT_ID: processEnv.ASANA_PROJECT_ID,
   };
 }
 

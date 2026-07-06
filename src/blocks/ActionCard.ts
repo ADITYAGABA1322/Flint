@@ -16,10 +16,13 @@ export const buildActionCard = (
       : `*⚡ Flint acted on your request*\n${results.summary}`;
 
   const fields = [
-    ...results.succeeded.map((r) => ({
-      type: 'mrkdwn' as const,
-      text: `✅ *${r.tool.toUpperCase()}*\n<${r.url ?? '#'}|${r.description}>`
-    })),
+    ...results.succeeded.map((r) => {
+      const hasValidUrl = typeof r.url === 'string' && (r.url.startsWith('http://') || r.url.startsWith('https://'));
+      return {
+        type: 'mrkdwn' as const,
+        text: `✅ *${r.tool.toUpperCase()}*\n${hasValidUrl ? `<${r.url}|${r.description}>` : r.description}`
+      };
+    }),
     ...results.failed.map((r) => ({
       type: 'mrkdwn' as const,
       text: `❌ *${r.tool.toUpperCase()} Failed*\n${r.error || r.description}`

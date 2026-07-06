@@ -21,4 +21,5 @@ export interface WorkspaceContext {
   isDuplicate: boolean;
   duplicateTarget?: ToolIssueMatch;
   isAlreadySuggested: boolean;
+  triggerPermalink?: string;
 }

@@ -48,6 +48,7 @@ export interface WorkspaceConfig {
   enabledPatterns: PatternType[];
   connectedTools: ToolName[];
   aggressiveness: 'subtle' | 'normal' | 'proactive';
+  artifactTemplate?: string;
 }
 
 export type ExecuteActions = (

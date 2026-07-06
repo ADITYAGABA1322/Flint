@@ -1,6 +1,6 @@
-# Flint — Local Development Setup
+# Flint — Local Development Setup Guide
 
-> Instructions for configuring dependencies, credentials, and local services to run Flint.
+This guide provides instructions for configuring credentials, environment variables, and services to run Flint.
 
 ---
 
@@ -8,99 +8,87 @@
 
 Ensure you have installed:
 *   **Node.js 22+**
-*   **Docker Desktop** (Required for local Redis execution)
-*   **Slack CLI** (Recommended)
 *   **Git**
+*   A dedicated **Slack Sandbox Workspace** where you are an Administrator.
 
 ---
 
-## 2. Shared Infrastructure: Local Redis Setup
-
-By default, Flint uses Upstash Redis for state management and deduplication caching. For local development, you should run a local Redis container to avoid serverless latency or token generation during initial setup:
-
-1.  **Start Local Redis via Docker:**
-    ```bash
-    docker run --name flint-redis -p 6379:6379 -d redis
-    ```
-2.  **Verify Redis is Running:**
-    ```bash
-    docker exec -it flint-redis redis-cli ping
-    # Expected output: PONG
-    ```
-
----
-
-## 3. Environment Configuration (`.env`)
+## 2. Environment Configuration (`.env`)
 
 Create a `.env` file in the root directory by copying the template:
 ```bash
 cp .env.example .env
 ```
 
-To configure each key, follow the guidelines below:
+Configure the following variables:
 
 ### A. Slack Credentials & Tokens
-Go to the [Slack API Apps Console](https://api.slack.com/apps) to register your development sandbox application.
+Go to the [Slack Developer Console](https://api.slack.com/apps) and configure your app.
 
 *   **`SLACK_SIGNING_SECRET`**:
     *   *Location:* **Settings** -> **Basic Information** -> **App Credentials** -> **Signing Secret**.
-    *   *Purpose:* Verifies that request bodies received at `/slack/events` are signed by Slack.
+    *   *Purpose:* Verifies that request bodies received by Bolt are signed by Slack.
 *   **`SLACK_APP_TOKEN` (starts with `xapp-`):**
-    *   *Location:* **Settings** -> **Basic Information** -> **App-Level Tokens** -> **Generate Token**. Select the `connections:write` scope.
-    *   *Purpose:* Establishes outbound WebSockets for local execution without exposing public tunnels.
+    *   *Location:* **Settings** -> **Basic Information** -> **App-Level Tokens** -> **Generate Token**. Add the `connections:write` scope.
+    *   *Purpose:* Establishes Socket Mode WebSocket connections for local execution.
 *   **`SLACK_BOT_TOKEN` (starts with `xoxb-`):**
     *   *Location:* **Features** -> **OAuth & Permissions** -> **Bot Token Scopes**. Add:
         *   `app_mentions:read`
         *   `chat:write`
         *   `reactions:write`
-        *   `reactions:read`
     *   Click **Install to Workspace** and copy the bot OAuth token.
 *   **`SLACK_USER_TOKEN` (starts with `xoxp-`):**
     *   *Location:* **Features** -> **OAuth & Permissions** -> **User Token Scopes**. Add:
-        *   `search:read`
-    *   Reinstall the app and copy the User OAuth token.
+        *   `search:read` (Required for RTS cross-channel search context).
+    *   Reinstall the app to apply the user scopes and copy the User OAuth token.
 
-### B. Anthropic Claude Client
-*   **`ANTHROPIC_API_KEY` (starts with `sk-ant-`):**
-    *   *Location:* [Anthropic API Console](https://console.anthropic.com/) under **API Keys**.
-    *   *Purpose:* Calls Claude Sonnet for intent classification and pattern evaluation.
+### B. NVIDIA Mistral AI Client
+*   **`NVIDIA_API_KEY` (starts with `nvapi-`):**
+    *   *Location:* [NVIDIA Build Console](https://build.nvidia.com/) API dashboard.
+    *   *Purpose:* Authenticates Mistral completions for intent classification.
+*   **`NVIDIA_API_URL`**: Set to `https://integrate.api.nvidia.com/v1`
+*   **`NVIDIA_API_MODEL`**: Set to the target LLM model name (e.g., `openai/gpt-oss-120b`).
 
-### C. Local Redis Configurations
-*   **`UPSTASH_REDIS_REST_URL`**: Set this to point to your local Redis container:
-    ```
-    UPSTASH_REDIS_REST_URL=http://localhost:6379
-    ```
-*   **`UPSTASH_REDIS_REST_TOKEN`**: Set to any placeholder value (local Redis containers do not enforce Upstash authentication tokens):
-    ```
-    UPSTASH_REDIS_REST_TOKEN=local-development-placeholder
-    ```
+### C. Serverless Redis (Upstash)
+*   **`UPSTASH_REDIS_REST_URL`**:
+    *   *Location:* [Upstash Console](https://console.upstash.com/) Redis Database details page.
+    *   *Purpose:* HTTP REST URL for state storage and deduplication.
+*   **`UPSTASH_REDIS_REST_TOKEN`**:
+    *   *Location:* Upstash Redis credentials console.
 
-### D. Linear Client Key
+### D. Integration Credentials
+
+#### Linear
 *   **`LINEAR_API_KEY` (starts with `lin_api_`):**
-    *   *Location:* [Linear Personal API Settings](https://linear.app/settings/api).
-    *   *Purpose:* Authenticates the Linear MCP tool client.
+    *   *Location:* **Linear Settings** -> **Account** -> **API** -> **Personal API Keys**.
+    *   *Purpose:* Authenticates the Linear MCP tool.
+
+#### Notion
+*   **`NOTION_API_KEY` (starts with `secret_`):**
+    *   *Location:* [Notion Integrations](https://www.notion.so/my-integrations). Create a new internal integration and copy the token.
+*   **`NOTION_DATABASE_ID` (32-character string):**
+    *   *Location:* Extracted from the URL of your Notion database page: `https://www.notion.so/workspace/`**`[database_id]`**`?v=...`
+    *   *Important:* Remember to invite your Flint integration to the database page via the page's top-right `...` menu under **Add connections**.
+
+#### Asana
+*   **`ASANA_ACCESS_TOKEN`**:
+    *   *Location:* [Asana Developer Console](https://app.asana.com/0/developer-console) -> **Personal Access Tokens**.
+*   **`ASANA_PROJECT_ID` (numeric string):**
+    *   *Location:* Extracted from your Asana board URL: `https://app.asana.com/0/`**`[project_id]`**`/list`.
 
 ---
 
-## 4. Launching the App
+## 3. Launching the App
 
-1.  **Install project dependencies:**
+1.  **Install dependencies:**
     ```bash
     npm install
     ```
-2.  **Start development server:**
+2.  **Start the development server:**
     ```bash
     npm run dev
     ```
-
----
-
-## 5. Troubleshooting & Diagnostics
-
-### Error: `invalid_auth`
-*   *Cause:* The `SLACK_BOT_TOKEN` (`xoxb-`) is incorrect, expired, or missing required scopes.
-*   *Resolution:* Reinstall the app on your developer workspace and update your token.
-
-### Error: `connect ECONNREFUSED 127.0.0.1:6379`
-*   *Cause:* The local Redis container is not running.
-*   *Resolution:* Start Docker Desktop and verify the container status using `docker ps`.
+3.  **Run automated tests:**
+    ```bash
+    npm run test
+    ```

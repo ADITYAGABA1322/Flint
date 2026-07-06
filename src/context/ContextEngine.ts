@@ -97,6 +97,20 @@ export async function gatherContext(
     logger.warn(MODULE, 'Failed to query Linear issues list, proceeding with empty issues context', err);
   }
 
+  // Fetch permalink for trigger message
+  let triggerPermalink: string | undefined = undefined;
+  if (ctx.channelId && ctx.messageTs) {
+    try {
+      const permRes = await userClient.chat.getPermalink({
+        channel: ctx.channelId,
+        message_ts: ctx.messageTs
+      });
+      triggerPermalink = permRes.permalink;
+    } catch (err) {
+      logger.warn(MODULE, 'Failed to fetch trigger permalink', err);
+    }
+  }
+
   // 3. Deduplication Synthesis
   const highestMatch = similarIssues[0];
   const isDuplicate = highestMatch ? highestMatch.similarity > 0.45 : false;
@@ -107,6 +121,7 @@ export async function gatherContext(
     similarIssues,
     isDuplicate,
     duplicateTarget: isDuplicate ? highestMatch : undefined,
-    isAlreadySuggested
+    isAlreadySuggested,
+    triggerPermalink
   };
 }

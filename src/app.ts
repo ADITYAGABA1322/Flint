@@ -5,6 +5,11 @@ import { logger } from './utils/logger';
 import { registerMentionHandler } from './handlers/mention';
 import { registerMessageHandler, registerActionHandlers } from './handlers/message';
 
+// Load tool runners to register them in ClientRegistry
+import './tools/mcp/LinearClient';
+import './tools/mcp/NotionClient';
+import './tools/mcp/AsanaClient';
+
 const MODULE = 'AppBootstrap';
 
 let app: App;

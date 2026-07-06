@@ -29,12 +29,12 @@ describe('Planner', () => {
     };
 
     const plan = await planner.plan(intent, config);
-    expect(plan.calls.length).toBe(1);
-    expect(plan.calls[0].server).toBe('linear');
-    expect(plan.calls[0].tool).toBe('create_issue');
-    expect(plan.calls[0].params.title).toBe('Fix critical crash');
-    expect(plan.calls[0].params.description).toBe('Payment gateway throws 500 error');
-    expect(plan.calls[0].params.priority).toBe('P1');
+    expect(plan.steps.length).toBe(1);
+    expect(plan.steps[0].server).toBe('linear');
+    expect(plan.steps[0].tool).toBe('create_issue');
+    expect(plan.steps[0].params.title).toBe('Fix critical crash');
+    expect(plan.steps[0].params.description).toBe('Payment gateway throws 500 error');
+    expect(plan.steps[0].params.priority).toBe('P1');
   });
 
   it('should plan nothing for NONE intent', async () => {
@@ -49,6 +49,6 @@ describe('Planner', () => {
     };
 
     const plan = await planner.plan(intent, config);
-    expect(plan.calls.length).toBe(0);
+    expect(plan.steps.length).toBe(0);
   });
 });

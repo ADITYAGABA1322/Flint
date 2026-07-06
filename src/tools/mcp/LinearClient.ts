@@ -1,6 +1,8 @@
 import type { ToolCall, ActionResult } from '../../../contracts/services';
+import type { ToolRunner } from '../../../contracts/orchestration';
 import { McpClient } from '../mcpRuntime';
 import { env } from '../../config/env';
+import { registry } from '../../orchestration/ClientRegistry';
 
 const linear = new McpClient({
   url: 'https://mcp.linear.app/mcp',
@@ -50,11 +52,25 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
       ? result.content.map((c: any) => c.text || '').join('\n')
       : String(result.text || 'Linear action complete');
 
+    let issueDisplay = textContent;
+    let url = result.url || 'https://linear.app';
+    try {
+      const parsed = JSON.parse(textContent);
+      if (parsed.id && parsed.title) {
+        issueDisplay = `${parsed.id}: ${parsed.title}`;
+      }
+      if (parsed.url) {
+        url = parsed.url;
+      }
+    } catch (e) {
+      // Use raw textContent if not a valid JSON structure
+    }
+
     return {
       tool: 'linear',
       ok: isOk,
-      description: textContent,
-      url: result.url || 'https://linear.app'
+      description: issueDisplay,
+      url: url
     };
   } catch (err) {
     return {
@@ -65,3 +81,5 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
     };
   }
 };
+
+registry.register('linear', { run });

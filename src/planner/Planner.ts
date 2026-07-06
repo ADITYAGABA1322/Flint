@@ -1,6 +1,7 @@
 import type { SlackContext } from '../../contracts/events';
-import type { WorkspaceConfig, ToolCall } from '../../contracts/services';
+import type { WorkspaceConfig } from '../../contracts/services';
 import type { IntentResult } from '../../contracts/planner';
+import type { WorkflowPlan, WorkflowStep } from '../../contracts/orchestration';
 import { gatherContext } from '../context/ContextEngine';
 import { classifyIntent } from '../intent/IntentEngine';
 import type { KnownBlock } from '@slack/bolt';
@@ -13,23 +14,47 @@ export interface ProactiveObservationPlan {
 }
 
 export class Planner {
-  async plan(intent: IntentResult, config: WorkspaceConfig): Promise<{ calls: ToolCall[] }> {
-    const calls: ToolCall[] = [];
+  async plan(intent: IntentResult, config: WorkspaceConfig): Promise<WorkflowPlan> {
+    const steps: WorkflowStep[] = [];
 
-    if (intent.intent === 'CREATE_TICKET' && config.connectedTools.includes('linear')) {
-      calls.push({
-        server: 'linear',
-        tool: 'create_issue',
-        params: {
-          title: intent.entities.title || 'Untitled Issue',
-          description: intent.entities.description || '',
-          priority: intent.entities.severity || 'P3'
-        }
-      });
+    if (intent.intent === 'CREATE_TICKET') {
+      if (config.connectedTools.includes('linear')) {
+        steps.push({
+          server: 'linear',
+          tool: 'create_issue',
+          params: {
+            title: intent.entities.title || 'Untitled Issue',
+            description: intent.entities.description || '',
+            priority: intent.entities.severity || 'P3'
+          }
+        });
+      }
+
+      if (config.connectedTools.includes('notion')) {
+        steps.push({
+          server: 'notion',
+          tool: 'create_page',
+          params: {
+            title: intent.entities.title || 'Untitled Sync Page',
+            content: intent.entities.description || ''
+          }
+        });
+      }
+
+      if (config.connectedTools.includes('asana')) {
+        steps.push({
+          server: 'asana',
+          tool: 'create_task',
+          params: {
+            name: intent.entities.title || 'Untitled Asana Task',
+            notes: intent.entities.description || ''
+          }
+        });
+      }
     }
 
     return {
-      calls
+      steps
     };
   }
   async planObservation(

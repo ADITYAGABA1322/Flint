@@ -4,6 +4,34 @@ import { logger } from '../utils/logger';
 
 const MODULE = 'WorkspaceConfigStore';
 
+export const DEFAULT_ARTIFACT_TEMPLATE = `## Executive Summary
+{{SUMMARY}}
+
+## Details
+* **Observed Behavior:** {{OBSERVED_BEHAVIOR}}
+* **Expected Behavior:** {{EXPECTED_BEHAVIOR}}
+* **Business Impact:** {{BUSINESS_IMPACT}}
+
+## Evidence
+* **Slack Thread:** {{SLACK_URL}}
+* **Reporter:** {{REPORTER}}
+* **Channel:** {{CHANNEL}}
+* **Timestamp:** {{TIMESTAMP}}
+
+## AI Analysis
+*Clearly marked as AI-generated:*
+{{AI_ANALYSIS}}
+
+## Metadata
+* **Suggested Priority:** {{SUGGESTED_PRIORITY}}
+* **Suggested Labels:** {{SUGGESTED_LABELS}}
+
+## Acceptance Criteria
+{{ACCEPTANCE_CRITERIA}}
+
+## Related Conversations & Duplicates
+{{RELATED_ISSUES}}`;
+
 const DEFAULT_CONFIG: Omit<WorkspaceConfig, 'workspaceId'> = {
   watchedChannels: [],
   escalationChannel: '',
@@ -13,8 +41,9 @@ const DEFAULT_CONFIG: Omit<WorkspaceConfig, 'workspaceId'> = {
     duplicateWindowHours: 2,
   },
   enabledPatterns: ['DUPLICATE_BUG', 'STALE_PR', 'UNANSWERED_Q', 'RELEASE_GAP'],
-  connectedTools: ['linear'],
+  connectedTools: ['linear', 'notion', 'asana'],
   aggressiveness: 'normal',
+  artifactTemplate: DEFAULT_ARTIFACT_TEMPLATE,
 };
 
 export async function getWorkspaceConfig(workspaceId: string): Promise<WorkspaceConfig> {

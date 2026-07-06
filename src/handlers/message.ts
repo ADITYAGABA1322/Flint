@@ -4,7 +4,7 @@ import { getWorkspaceConfig } from '../config/WorkspaceConfigStore';
 import { Planner } from '../planner/Planner';
 import { md5 } from '../utils/hashing';
 import { redis } from '../tools/clients/redis';
-import { run as runLinear } from '../tools/mcp/LinearClient';
+import { registry } from '../orchestration/ClientRegistry';
 
 const MODULE = 'SlackMessageHandler';
 
@@ -108,7 +108,9 @@ export function registerActionHandlers(app: App): void {
 
       const permalink = permalinkRes.permalink || '';
 
-      await runLinear({
+      const runner = registry.get('linear');
+      if (!runner) throw new Error('Linear runner not registered');
+      await runner.run({
         server: 'linear',
         tool: 'save_comment',
         params: {
@@ -143,31 +145,55 @@ export function registerActionHandlers(app: App): void {
     const triggerMessage = (action as any).value;
     const channelId = body.channel?.id || '';
     const messageTs = (body as any).message?.thread_ts || (body as any).message?.ts || '';
+    const workspaceId = body.team?.id || 'unknown';
 
     try {
-      const result = await runLinear({
-        server: 'linear',
-        tool: 'save_issue',
-        params: {
+      const config = await getWorkspaceConfig(workspaceId);
+      const intent = {
+        intent: 'CREATE_TICKET' as const,
+        confidence: 1.0,
+        entities: {
           title: triggerMessage.substring(0, 80),
           description: `Captured proactively from Slack discussion:\n> "${triggerMessage}"`,
-          priority: 3
+          severity: 'P3' as const,
+          toolTargets: config.connectedTools
+        },
+        reasoning: 'Proactive creation from suggestion card click'
+      };
+
+      const planner = new Planner();
+      const plan = await planner.plan(intent, config);
+
+      const { executeWorkflow } = await import('../orchestration/WorkflowOrchestrator');
+      const outcomes = await executeWorkflow(plan);
+
+      const blocks: any[] = [
+        {
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `*:zap: Flint Workflow Executed:*`
+          }
         }
+      ];
+
+      outcomes.results.forEach((res) => {
+        const icon = res.ok ? '✅' : '❌';
+        const displayTool = res.tool.toUpperCase();
+        blocks.push({
+          type: 'section',
+          text: {
+            type: 'mrkdwn',
+            text: `${icon} *${displayTool}*\n${res.description}${res.url ? ` · <${res.url}|View Item>` : ''}`
+          }
+        });
       });
 
       await client.chat.update({
         channel: channelId,
         ts: (body as any).message.ts,
-        text: `✅ Created Linear issue successfully!`,
-        blocks: [
-          {
-            type: 'section',
-            text: {
-              type: 'mrkdwn',
-              text: `✅ *Linear Ticket Created*\nI've created the issue: *<${result.url || '#'}|${result.description}>*`
-            }
-          }
-        ]
+        text: `✅ Workflow executed: ${outcomes.summary}`,
+        blocks
       });
     } catch (err) {
       logger.error(MODULE, 'Failed to create ticket from suggestion:', err);
