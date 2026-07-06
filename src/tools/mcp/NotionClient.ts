@@ -25,6 +25,28 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
   try {
     const title = (call.params.title as string) || 'Slack Sync Ticket';
     const content = (call.params.content as string) || '';
+    const blocks = (call.params.blocks as any[]) || [];
+
+    let children = [];
+    if (blocks.length > 0) {
+      children = blocks;
+    } else if (content) {
+      children = [
+        {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: {
+            rich_text: [
+              {
+                text: {
+                  content: content.substring(0, 2000)
+                }
+              }
+            ]
+          }
+        }
+      ];
+    }
 
     const response = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
@@ -46,21 +68,7 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
             ]
           }
         },
-        children: content ? [
-          {
-            object: 'block',
-            type: 'paragraph',
-            paragraph: {
-              rich_text: [
-                {
-                  text: {
-                    content: content.substring(0, 2000)
-                  }
-                }
-              ]
-            }
-          }
-        ] : []
+        children
       })
     });
 

@@ -42,7 +42,7 @@ export function registerMentionHandler(app: App): void {
     }
 
     const config = await getWorkspaceConfig(ctx.workspaceId);
-    const results = await executeActions(intent, config);
+    const results = await executeActions(intent, config, ctx);
 
     const blocks = buildActionCard(null, results);
     await say({

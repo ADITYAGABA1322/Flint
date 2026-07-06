@@ -14,10 +14,12 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
 
   if (!asanaToken || !projectId) {
     logger.warn(MODULE, 'Asana credentials not fully configured in env. Running in mock fallback mode.');
+    const mockTaskName = call.params.name || 'Untitled task';
+    const mockSubtasksCount = Array.isArray(call.params.subtasks) ? call.params.subtasks.length : 0;
     return {
       tool: 'asana',
       ok: true,
-      description: `[Mock] Asana task created: "${call.params.name || 'Untitled task'}"`,
+      description: `[Mock] Asana task created: "${mockTaskName}" with ${mockSubtasksCount} subtasks.`,
       url: 'https://asana.com/mock-task-id'
     };
   }
@@ -25,6 +27,7 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
   try {
     const name = (call.params.name as string) || 'Slack Actionable Task';
     const notes = (call.params.notes as string) || '';
+    const subtasks = (call.params.subtasks as string[]) || [];
 
     const response = await fetch('https://app.asana.com/api/1.0/tasks', {
       method: 'POST',
@@ -47,12 +50,37 @@ export const run = async (call: ToolCall): Promise<ActionResult> => {
     }
 
     const data = await response.json() as any;
-    const taskUrl = `https://app.asana.com/0/${projectId}/${data.data.gid}`;
+    const parentGid = data.data.gid;
+    const taskUrl = `https://app.asana.com/0/${projectId}/${parentGid}`;
+
+    // Create subtasks in Asana
+    for (const subtaskName of subtasks) {
+      try {
+        const subRes = await fetch(`https://app.asana.com/api/1.0/tasks/${parentGid}/subtasks`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${asanaToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            data: {
+              name: subtaskName
+            }
+          })
+        });
+        if (!subRes.ok) {
+          const subErrText = await subRes.text();
+          logger.error(MODULE, `Failed to create subtask "${subtaskName}": ${subRes.status} - ${subErrText}`);
+        }
+      } catch (subErr) {
+        logger.error(MODULE, `Error posting subtask "${subtaskName}":`, subErr);
+      }
+    }
 
     return {
       tool: 'asana',
       ok: true,
-      description: `Successfully created Asana task: "${name}"`,
+      description: `Successfully created Asana task: "${name}" with ${subtasks.length} subtasks`,
       url: taskUrl
     };
   } catch (err: any) {

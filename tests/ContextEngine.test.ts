@@ -20,6 +20,9 @@ vi.mock('../src/tools/clients/slack', () => {
             ]
           }
         })
+      },
+      chat: {
+        getPermalink: async () => ({ permalink: 'https://slack.com/archive/C123/p123' })
       }
     }
   };

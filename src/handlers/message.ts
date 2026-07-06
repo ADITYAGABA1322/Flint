@@ -161,8 +161,18 @@ export function registerActionHandlers(app: App): void {
         reasoning: 'Proactive creation from suggestion card click'
       };
 
+      const ctx = {
+        workspaceId,
+        channelId,
+        userId: body.user?.id || 'unknown',
+        messageTs,
+        text: triggerMessage,
+        triggerType: 'action' as const,
+        rawEvent: body
+      };
+
       const planner = new Planner();
-      const plan = await planner.plan(intent, config);
+      const plan = await planner.plan(intent, config, ctx);
 
       const { executeWorkflow } = await import('../orchestration/WorkflowOrchestrator');
       const outcomes = await executeWorkflow(plan);
