@@ -4,6 +4,7 @@ import { env } from './config/env';
 import { logger } from './utils/logger';
 import { registerMentionHandler } from './handlers/mention';
 import { registerMessageHandler, registerActionHandlers } from './handlers/message';
+import { runObservationCycle } from './observation/ObservationEngine';
 
 // Load tool runners to register them in ClientRegistry
 import './tools/mcp/LinearClient';
@@ -42,8 +43,14 @@ expressApp.get('/health', (_req, res) => {
 });
 
 expressApp.post('/cron/tick', async (_req, res) => {
-  logger.info(MODULE, 'Received POST /cron/tick — monitor stub');
-  res.status(200).json({ ok: true, note: 'monitor stub cycle' });
+  logger.info(MODULE, 'Received POST /cron/tick — triggering observation cycle');
+  try {
+    const findings = await runObservationCycle('T0123ABC');
+    res.status(200).json({ ok: true, actionedFindingsCount: findings.length });
+  } catch (err) {
+    logger.error(MODULE, 'Failed to run observation cycle:', err);
+    res.status(500).json({ ok: false, error: String(err) });
+  }
 });
 
 registerMentionHandler(app);
