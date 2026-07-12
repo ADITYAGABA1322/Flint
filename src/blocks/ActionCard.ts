@@ -37,7 +37,7 @@ export const buildActionCard = (
     card.push({ type: 'section', fields });
   }
 
-  card.push({
+    card.push({
     type: 'actions',
     elements: [
       {
@@ -57,6 +57,18 @@ export const buildActionCard = (
         type: 'button',
         text: { type: 'plain_text', text: 'Escalate' },
         action_id: 'flint_escalate',
+        value: pattern?.id ?? 'manual'
+      },
+      {
+        type: 'button',
+        text: { type: 'plain_text', text: '👍 Helpful' },
+        action_id: 'flint_feedback_helpful',
+        value: pattern?.id ?? 'manual'
+      },
+      {
+        type: 'button',
+        text: { type: 'plain_text', text: '👎 Not Helpful' },
+        action_id: 'flint_feedback_unhelpful',
         value: pattern?.id ?? 'manual'
       }
     ]

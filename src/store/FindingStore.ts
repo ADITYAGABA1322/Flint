@@ -51,7 +51,6 @@ export async function isFresh(id: string): Promise<boolean> {
   if (!finding) {
     return true;
   }
-  // A finding is considered fresh if it's new, confirmed, or not yet completed/ignored.
-  // It is NOT fresh if it has been NOTIFIED, ACTIONED, IGNORED, or SNOOZED recently.
-  return !['NOTIFIED', 'ACTIONED', 'IGNORED', 'SNOOZED'].includes(finding.status);
+  // A finding is considered NOT fresh if it is in a terminal or actioned state, to avoid double notifications.
+  return !['ACTIONED', 'FALSE_POSITIVE', 'IGNORED', 'CANCELLED', 'RESOLVED', 'CLOSED'].includes(finding.status);
 }

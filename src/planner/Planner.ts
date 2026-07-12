@@ -19,10 +19,12 @@ export interface ProactiveObservationPlan {
 }
 
 function buildFallbackArtifact(intent: IntentResult, ctx?: SlackContext): EngineeringArtifact {
+  const title = intent.entities.title || 'Untitled Issue';
+  const desc = intent.entities.description || 'Slack triggered workflow.';
   return {
-    title: intent.entities.title || 'Untitled Issue',
-    executiveSummary: intent.entities.description || 'Slack triggered workflow.',
-    observedBehavior: ctx?.text || intent.entities.description || 'Not specified.',
+    title,
+    executiveSummary: desc,
+    observedBehavior: ctx?.text || desc,
     expectedBehavior: 'Not specified.',
     businessImpact: 'Not specified.',
     technicalAnalysis: 'No analysis available.',
@@ -35,7 +37,33 @@ function buildFallbackArtifact(intent: IntentResult, ctx?: SlackContext): Engine
       timestamp: ctx?.messageTs || String(new Date().getTime() / 1000)
     },
     acceptanceCriteria: ['Verify resolution with reporter.'],
-    relatedIssues: []
+    relatedIssues: [],
+    linear: {
+      title,
+      conciseSummary: desc,
+      severity: intent.entities.severity || 'P3',
+      reproduction: 'Check Slack history.',
+      impact: 'Not specified.',
+      acceptanceCriteria: ['Verify resolution with reporter.']
+    },
+    notion: {
+      title,
+      background: 'Slack sync.',
+      investigation: 'Verify Slack logs.',
+      observations: ctx?.text || desc,
+      technicalAnalysis: 'No analysis available.',
+      implementationIdeas: 'Not specified.',
+      references: 'Slack.',
+      timeline: 'Not specified.'
+    },
+    asana: {
+      title,
+      checklist: ['Verify resolution with reporter.'],
+      ownerPlaceholders: 'Assignee',
+      milestones: 'Release',
+      dependencies: 'None',
+      dueSuggestion: 'Next sprint'
+    }
   };
 }
 

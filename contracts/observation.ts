@@ -12,7 +12,7 @@ export interface Signal {
 export interface Finding {
   id: string; // Stable hash of grouped signals to prevent duplicates
   type: string; // e.g. 'DUPLICATE_BUG', 'STALE_PR', 'UNANSWERED_Q'
-  status: 'NEW' | 'CONFIRMED' | 'NOTIFIED' | 'ACTIONED' | 'RESOLVED' | 'IGNORED' | 'SNOOZED';
+  status: 'NEW' | 'OBSERVED' | 'REASONED' | 'ACTIONED' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'FALSE_POSITIVE' | 'IGNORED' | 'CANCELLED';
   title: string;
   summary: string;
   signals: Signal[];

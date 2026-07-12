@@ -4,6 +4,9 @@ import { getWorkspaceConfig } from '../config/WorkspaceConfigStore';
 import { classifyIntent } from '../intent/IntentEngine';
 import { executeActions } from '../tools/MCPFanOut';
 import { buildActionCard } from '../blocks/ActionCard';
+import { saveFinding } from '../store/FindingStore';
+import { md5 } from '../utils/hashing';
+import type { Finding } from '../../contracts/observation';
 
 const MODULE = 'SlackMentionHandler';
 
@@ -44,7 +47,41 @@ export function registerMentionHandler(app: App): void {
     const config = await getWorkspaceConfig(ctx.workspaceId);
     const results = await executeActions(intent, config, ctx);
 
-    const blocks = buildActionCard(null, results);
+    // Save as finding in FindingStore so that details/feedback actions resolve correctly
+    const findingId = md5(`${ctx.workspaceId}:${ctx.channelId}:${ctx.messageTs}`);
+    const finding: Finding = {
+      id: findingId,
+      type: 'MENTION_TICKET',
+      status: 'ACTIONED',
+      title: intent.entities.title || cleanText.substring(0, 80),
+      summary: intent.entities.description || cleanText,
+      signals: [
+        {
+          id: md5(`${ctx.channelId}:${ctx.messageTs}`),
+          source: 'slack',
+          timestamp: ctx.messageTs,
+          author: ctx.userId,
+          content: cleanText,
+          context: { channelId: ctx.channelId }
+        }
+      ],
+      confidence: intent.confidence,
+      severity: intent.entities.severity || 'P3',
+      firstSeen: new Date().toISOString(),
+      lastSeen: new Date().toISOString(),
+      occurrences: 1,
+      metadata: {
+        technicalAnalysis: intent.reasoning,
+        outcomes: results
+      }
+    };
+    try {
+      await saveFinding(finding);
+    } catch (saveErr) {
+      logger.warn(MODULE, 'Failed to save mention finding to FindingStore', saveErr);
+    }
+
+    const blocks = buildActionCard(finding as any, results);
     await say({
       thread_ts: event.ts,
       blocks,

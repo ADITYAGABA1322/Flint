@@ -1,5 +1,8 @@
 import type { KnownBlock } from '@slack/bolt';
 import type { WorkspaceContext } from '../../contracts/context';
+import { formatFriendlyTime } from '../utils/time';
+
+const formatUser = (user: string) => (user.startsWith('U') || user.startsWith('W')) ? `<@${user}>` : `@${user}`;
 
 export function buildBriefingCard(context: WorkspaceContext): KnownBlock[] {
   const card: KnownBlock[] = [];
@@ -17,7 +20,7 @@ export function buildBriefingCard(context: WorkspaceContext): KnownBlock[] {
     if (context.similarThreads.length > 0) {
       const threadsList = context.similarThreads
         .slice(0, 3)
-        .map(t => `• <${t.permalink}|#${t.channel}> by @${t.user}: _"${t.text.substring(0, 60)}..."_`)
+        .map(t => `• <${t.permalink}|#${t.channel}> by ${formatUser(t.user)} (${formatFriendlyTime(t.timestamp)}): _"${t.text.substring(0, 60)}..."_`)
         .join('\n');
 
       card.push({
@@ -59,7 +62,7 @@ export function buildBriefingCard(context: WorkspaceContext): KnownBlock[] {
     if (context.similarThreads.length > 0) {
       const threadsList = context.similarThreads
         .slice(0, 3)
-        .map(t => `• <${t.permalink}|#${t.channel}> by @${t.user}: _"${t.text.substring(0, 60)}..."_`)
+        .map(t => `• <${t.permalink}|#${t.channel}> by ${formatUser(t.user)} (${formatFriendlyTime(t.timestamp)}): _"${t.text.substring(0, 60)}..."_`)
         .join('\n');
 
       card.push({

@@ -82,8 +82,8 @@ export async function runObservationCycle(workspaceId: string): Promise<Finding[
               continue;
             }
 
-            // Transition to CONFIRMED
-            evaluated.status = 'CONFIRMED';
+            // Transition to REASONED
+            evaluated.status = 'REASONED';
             await saveFinding(evaluated);
 
             // 6. Action Execution (Planner & Orchestrator Integration)
@@ -130,7 +130,7 @@ export async function runObservationCycle(workspaceId: string): Promise<Finding[
                   text: `🚨 *Flint Proactive Observation Alert*\nFlint autonomously detected workflow friction (*${evaluated.type}*) in <#${slackCtx.channelId}>:\n\n> *${evaluated.title}*\n> _${evaluated.summary}_`
                 }
               };
-              const outcomeCards = buildActionCard(null, outcomes);
+              const outcomeCards = buildActionCard(evaluated as any, outcomes);
               const alertBlocks = [titleBlock, ...outcomeCards];
 
               await slackClient.chat.postMessage({
