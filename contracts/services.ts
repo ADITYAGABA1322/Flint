@@ -44,6 +44,7 @@ export interface WorkspaceConfig {
     stalePrHours: number;
     unansweredHours: number;
     duplicateWindowHours: number;
+    minConfidence?: number;
   };
   enabledPatterns: PatternType[];
   connectedTools: ToolName[];

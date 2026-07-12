@@ -11,6 +11,12 @@ import './tools/mcp/LinearClient';
 import './tools/mcp/NotionClient';
 import './tools/mcp/AsanaClient';
 
+// Load collectors and detectors to register them in registries
+import './collectors/SlackCollector';
+import './detectors/DuplicateBugDetector';
+import './detectors/StalePRDetector';
+import './detectors/UnansweredQDetector';
+
 const MODULE = 'AppBootstrap';
 
 let app: App;

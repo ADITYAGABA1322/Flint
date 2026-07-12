@@ -36,9 +36,10 @@ const DEFAULT_CONFIG: Omit<WorkspaceConfig, 'workspaceId'> = {
   watchedChannels: [],
   escalationChannel: '',
   thresholds: {
-    stalePrHours: 48,
+    stalePrHours: 24,
     unansweredHours: 4,
-    duplicateWindowHours: 2,
+    duplicateWindowHours: 4,
+    minConfidence: 0.80,
   },
   enabledPatterns: ['DUPLICATE_BUG', 'STALE_PR', 'UNANSWERED_Q', 'RELEASE_GAP'],
   connectedTools: ['linear', 'notion', 'asana'],

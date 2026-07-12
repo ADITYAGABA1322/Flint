@@ -27,12 +27,19 @@ export function registerMessageHandler(app: App): void {
 
     try {
       const config = await getWorkspaceConfig(event.team || 'unknown');
-      logger.info(MODULE, `Loaded workspace config: watchedChannels=${JSON.stringify(config.watchedChannels)}`);
-
-      const isWatched = config.watchedChannels.length === 0 || config.watchedChannels.includes(event.channel);
-      if (!isWatched) {
-        logger.info(MODULE, `Skipping event: channel "${event.channel}" is not in watched list`);
-        return;
+      
+      // Auto-register the channel to watchedChannels list upon receiving any message in it
+      if (!config.watchedChannels.includes(event.channel)) {
+        config.watchedChannels.push(event.channel);
+        if (!config.escalationChannel) {
+          config.escalationChannel = event.channel;
+        }
+        try {
+          await redis.set(`workspace:config:${event.team || 'unknown'}`, config);
+          logger.info(MODULE, `Dynamically registered channel "${event.channel}" to watched list in Redis.`);
+        } catch (redisErr) {
+          logger.warn(MODULE, 'Failed to save auto-registered channel to Redis config', redisErr);
+        }
       }
 
       const cleanText = event.text ? event.text.replace(/<@[^>]+>/g, '').trim() : '';

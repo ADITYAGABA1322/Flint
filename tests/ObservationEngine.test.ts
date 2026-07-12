@@ -2,6 +2,10 @@ import { vi, describe, it, expect } from 'vitest';
 import { runObservationCycle } from '../src/observation/ObservationEngine';
 import type { WorkspaceConfig } from '../contracts/services';
 
+// Import collectors and detectors to populate registry during test run
+import '../src/collectors/SlackCollector';
+import '../src/detectors/DuplicateBugDetector';
+
 const mockConfig: WorkspaceConfig = {
   workspaceId: 'T0123ABC',
   watchedChannels: ['C12345'],
@@ -63,12 +67,25 @@ vi.mock('../src/tools/clients/slack', () => {
   };
 });
 
+// Mock LinearClient to prevent network/MCP server calls during observation cycles
+vi.mock('../src/tools/mcp/LinearClient', () => {
+  return {
+    run: async () => ({
+      ok: true,
+      description: JSON.stringify({
+        issues: []
+      })
+    })
+  };
+});
+
 // Mock Redis client
 vi.mock('../src/tools/clients/redis', () => {
   return {
     redis: {
       get: vi.fn().mockResolvedValue(null),
-      set: vi.fn().mockResolvedValue('OK')
+      set: vi.fn().mockResolvedValue('OK'),
+      del: vi.fn().mockResolvedValue(1)
     }
   };
 });
