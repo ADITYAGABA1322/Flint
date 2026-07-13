@@ -51,7 +51,10 @@ expressApp.get('/health', (_req, res) => {
 expressApp.post('/cron/tick', async (_req, res) => {
   logger.info(MODULE, 'Received POST /cron/tick — triggering observation cycle');
   try {
-    const findings = await runObservationCycle('T0123ABC');
+    const authTest = await app.client.auth.test();
+    const workspaceId = authTest.team_id || 'T0BEY7DPTEG';
+    logger.info(MODULE, `Dynamically resolved workspaceId: ${workspaceId}`);
+    const findings = await runObservationCycle(workspaceId);
     res.status(200).json({ ok: true, actionedFindingsCount: findings.length });
   } catch (err) {
     logger.error(MODULE, 'Failed to run observation cycle:', err);
