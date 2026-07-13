@@ -39,10 +39,9 @@ The goal is to make Slack an intelligent operating system for engineering teams 
 | Runtime | Node.js 22 |
 | Server | Express |
 | Slack | Bolt (ExpressReceiver) |
-| AI | Anthropic Claude Sonnet |
+| AI | NVIDIA Mistral AI |
 | Integrations | MCP |
 | Storage | Upstash Redis |
-| Scheduler | Upstash QStash |
 | UI | Slack Block Kit |
 
 ---
